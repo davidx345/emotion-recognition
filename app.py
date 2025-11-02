@@ -1,6 +1,9 @@
-from flask import Flask, render_template, Response, request, redirect, url_for
+from flask import Flask, render_template, Response, request, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 import os
+import base64
+import numpy as np
+import cv2
 from face_detection import DetectEmotion, detect_emotion_from_image
 from database import db, EmotionRecord
 
@@ -31,6 +34,30 @@ def upload():
         db.session.add(record)
         db.session.commit()
     return redirect(url_for('index'))
+
+@app.route('/detect_webcam', methods=['POST'])
+def detect_webcam():
+    data = request.get_json()
+    image_data = data.get('image')
+    
+    if not image_data:
+        return jsonify({'error': 'No image data'}), 400
+    
+    # Decode base64 image
+    image_data = image_data.split(',')[1]
+    image_bytes = base64.b64decode(image_data)
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
+    # Save temporarily
+    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_webcam.jpg')
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    cv2.imwrite(temp_path, frame)
+    
+    # Detect emotion
+    emotion = detect_emotion_from_image(temp_path)
+    
+    return jsonify({'emotion': emotion})
 
 def gen(camera):
     while True:
