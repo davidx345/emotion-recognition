@@ -1,9 +1,4 @@
 # Emotion Recognition Web Application
-
-<p align="center">
-  <img src="images/Intro.gif" style="width: 300px;"/>
-</p>
-
 **Table of Contents**:
 
 <!--ts-->
