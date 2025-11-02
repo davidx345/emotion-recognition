@@ -46,3 +46,24 @@ class DetectEmotion(object):
         ret, jpeg = cv2.imencode('.jpg', frame)
 
         return (jpeg.tobytes())
+
+def detect_emotion_from_image(image_path):
+    image = cv2.imread(image_path)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_detector.detectMultiScale(gray, 1.3, 5)
+
+    if len(faces) > 0:
+        (x, y, w, h) = faces[0]  # Take the first detected face
+        roi_gray = gray[y:y + h, x:x + w]
+        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
+
+        if np.sum([roi_gray]) != 0:
+            roi = roi_gray.astype('float') / 255.0
+            roi = img_to_array(roi)
+            roi = np.expand_dims(roi, axis=0)
+
+            preds = classifier.predict(roi)[0]
+            label = class_labels[preds.argmax()]
+            return label
+
+    return 'No Face Detected'
